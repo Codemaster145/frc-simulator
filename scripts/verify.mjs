@@ -3,7 +3,7 @@
 // touch emulation at three iPad sizes plus a laptop, saves screenshots to shots/<browser>/, and fails
 // on console errors or broken interactions.
 //   node scripts/verify.mjs [--only=portrait] [--browser=chromium|firefox|webkit] [--sim-only]
-import { preview } from 'vite';
+import { testServer } from './test-server.mjs';
 import { chromium, firefox, webkit } from 'playwright';
 import fs from 'node:fs';
 import { PNG } from 'pngjs';
@@ -21,9 +21,7 @@ const SOFTWARE_GPU = process.env.CYBERCATS_SOFTWARE_GPU === '1';
 const OUT = `shots/${BROWSER}`;
 fs.mkdirSync(OUT, { recursive: true });
 
-const PORT = 4173 + ['chromium', 'firefox', 'webkit'].indexOf(BROWSER);
-const server = await preview({ preview: { port: PORT, strictPort: true, host: '127.0.0.1' }, logLevel: 'warn' });
-const URL = `http://127.0.0.1:${PORT}/`;
+const { base: URL, close: closeServer } = await testServer();
 const browser = BROWSER === 'firefox' ? await firefox.launch() : BROWSER === 'webkit' ? await webkit.launch()
   : await chromium.launch({ args: ['--use-angle=swiftshader', '--enable-unsafe-swiftshader', '--ignore-gpu-blocklist'] });
 console.log(`Browser: ${BROWSER} ${browser.version()}`);
@@ -244,7 +242,7 @@ for (const size of SIZES) {
 await simTests();
 
 await browser.close();
-await new Promise((r) => server.httpServer.close(r));
+await closeServer();
 
 async function simTests() {
   // ---------------------------------------------------------------- the simulation
@@ -258,7 +256,7 @@ async function simTests() {
   await step(4);
   check(await page.evaluate(() => document.querySelector('.sim-score')?.offsetParent !== null), 'HUD: score pill is visible');
   check(await page.evaluate(() => !document.querySelector('.sim-status') && !document.querySelector('.sim-controls')), 'HUD: the old crowded bar is gone');
-  check(await page.evaluate(() => [...document.querySelectorAll('.sim-hud button')].filter((b) => b.offsetParent).length <= 4), 'HUD: at most four small buttons');
+  check(await page.evaluate(() => [...document.querySelectorAll('.sim-hud > button, .sim-tr > button')].filter((b) => b.offsetParent).length <= 4), 'HUD: at most four small chrome buttons');
   // the AI drives it until we touch something
   check(await page.evaluate(() => window.__viewer.state.sim.status().control === 'ai'), 'free drive: the robot drives itself at first');
 
@@ -300,12 +298,13 @@ async function simTests() {
   check(await page.evaluate((s) => window.__viewer.state.sim.world.robot.shotsFired === s, shots2), 'releasing Shoot stops the indexer');
   // intake toggle
   const intakeBox = await page.locator('.dp-intake').boundingBox();
+  check(await page.evaluate(() => window.__viewer.state.sim.robot.rollers === 'in' && document.querySelector('.dp-intake').getAttribute('aria-pressed') === 'true'), 'automatic deployment starts with the intake rollers on');
   await page.touchscreen.tap(intakeBox.x + intakeBox.width / 2, intakeBox.y + intakeBox.height / 2);
-  await step(0.3);
-  check(await page.evaluate(() => window.__viewer.state.sim.robot.rollers === 'in' && document.querySelector('.dp-intake').getAttribute('aria-pressed') === 'true'), 'Intake button turns the rollers on (and shows it)');
+  await step(2);
+  check(await page.evaluate(() => window.__viewer.state.sim.robot.rollers === 'off' && window.__viewer.state.sim.robot.intakeAngle > 60), 'Intake button stops the rollers and stows the intake');
   await page.touchscreen.tap(intakeBox.x + intakeBox.width / 2, intakeBox.y + intakeBox.height / 2);
-  await step(0.6);
-  check(await page.evaluate(() => window.__viewer.state.sim.robot.rollers === 'off' && window.__viewer.state.sim.robot.intakeAngle < -60), 'tapping Intake again stops and stows it');
+  await step(2);
+  check(await page.evaluate(() => window.__viewer.state.sim.robot.rollers === 'in' && document.querySelector('.dp-intake').getAttribute('aria-pressed') === 'true' && window.__viewer.state.sim.robot.intakeAngle < 3), 'tapping Intake again deploys it and runs the rollers');
   // ferry from the neutral zone, with the subtle indicator
   await page.evaluate(() => { const w = window.__viewer.state.sim.world; w.robot.place(0.5, -1.2, Math.PI / 2); w.robot.preload(w.preloadIdx); w.robot.shoot = true; });
   await page.evaluate(() => { window.__viewer.state.sim.controls.touch.shoot = true; });
@@ -344,7 +343,7 @@ async function simTests() {
   await tapEl(page, '.sim-tr [data-act=settings]');
   await page.waitForTimeout(300);
   const labels = await page.evaluate(() => [...document.querySelectorAll('.sheet .row-label, .sheet .row > span, .sheet .sheet-actions .act span:not(.icon)')].map((e) => e.textContent.trim()).filter(Boolean));
-  check(JSON.stringify(labels) === JSON.stringify(['Alliance', 'Bumper Color in CAD View', 'Camera', 'Robot Sound', 'Reset Field', 'Controls Help']), `sim settings: ${labels.join(', ')}`);
+  check(JSON.stringify(labels) === JSON.stringify(['Alliance', 'Bumper Color in CAD View', 'Camera', 'Robot Sound', 'Estimated intake retraction (°)', 'Reset Field', 'Controls Help']), `sim settings: ${labels.join(', ')}`);
   await shot(page, size, 'sim-settings');
   await tapEl(page, '.sheet [data-key=alliance] [data-v=blue]');
   await tapEl(page, '.sheet [data-key=bumper] [data-v=blue]');

@@ -57,3 +57,73 @@ test('AI recovery does not retract the deployed startup intake on its own',async
   expect(w.robot.intakeDown).toBe(true);
  }finally{w.dispose();}
 });
+
+test('first driving handoff collects the starting FUEL pile after automatic deployment',async()=>{
+ const w=await makeWorld();try{
+  // Driving alone must not turn off the rollers that automatic deployment enabled.
+  run(w,.5);
+  const r=w.robot;let caught=0;r.onIntake=()=>caught++;
+  for(let i=0;i<12;i++){
+   w.fuel.place(i,r.toWorld((i%4-1.5)*.16,.075,.85+Math.floor(i/4)*.16));
+  }
+  w.fuel.syncAll();
+  const startX=r.x;
+  run(w,1.5,input({mx:1}));
+  expect(w.control).toBe('driver');
+  expect(r.x).toBeGreaterThan(startX+.1);
+  expect(r.rollers).toBe('in');
+  expect(caught).toBeGreaterThan(0);
+ }finally{w.dispose();}
+});
+
+test('FUEL already touching the collection region is captured on the first active deployment',async()=>{
+ const w=await makeWorld();try{
+  // Take control while the intake is still lowering, then overlap the roller just
+  // before the deployed pose. Collection checks positions each step, not only entry events.
+  w.step(input({mx:1}));
+  run(w,.5-2/120);
+  const r=w.robot;let caught=0;r.onIntake=()=>caught++;
+  w.fuel.place(0,r.toWorld(0,.075,.65));w.fuel.syncAll();
+  run(w,3/120);
+  expect(r.intakeAngle).toBe(0);
+  expect(caught).toBe(1);
+  expect(r.captured.filter(c=>c.i===0)).toHaveLength(1);
+  run(w,.1);
+  expect(caught).toBe(1);
+ }finally{w.dispose();}
+});
+
+test('every new Free Drive and High Score match starts with a collecting intake',async()=>{
+ const w=await makeWorld();try{
+  for(const mode of ['free','highscore','free'] as const){
+   w.setMode(mode);
+   expect(w.robot.intakeAngle).toBe(74);
+   run(w,mode==='highscore'?3.1:.5);
+   expect(w.robot.intakeAngle).toBe(0);
+   expect(w.robot.disabled).toBe(false);
+   expect(w.robot.rollers).toBe('in');
+   w.takeOver();
+   expect(w.robot.rollers).toBe('in');
+  }
+ }finally{w.dispose();}
+});
+
+test('manual roller toggle and arm commands still stop, stow, redeploy, and collect',async()=>{
+ const w=await makeWorld();try{
+  run(w,.5);
+  w.step(input({toggleIntake:true}));
+  expect(w.robot.rollers).toBe('off');
+  run(w,2);
+  expect(w.robot.intakeAngle).toBe(74);
+  w.step(input({toggleIntake:true}));
+  run(w,2);
+  expect(w.robot.intakeAngle).toBe(0);
+  expect(w.robot.rollers).toBe('in');
+  w.setIntakeCommand('retract');run(w,2);expect(w.robot.intakeAngle).toBe(74);
+  w.setIntakeCommand('deploy');run(w,2);expect(w.robot.intakeAngle).toBe(0);
+  let caught=0;w.robot.onIntake=()=>caught++;
+  w.fuel.place(0,w.robot.toWorld(0,.075,.65));w.fuel.syncAll();
+  run(w,.25);
+  expect(caught).toBe(1);
+ }finally{w.dispose();}
+});

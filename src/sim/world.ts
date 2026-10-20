@@ -165,9 +165,10 @@ export class SimWorld {
     this.brain = new EndlessBrain(this, mode === 'highscore');
     // settle the preloads and the staged fuel
     for (let k = 0; k < 120; k++) this.physicsStep();
-    // First rendered frame starts raised; the next physics step snaps the original
-    // four-bar and its colliders to deployed before intake contact is evaluated.
+    // First rendered frame starts raised; the rollers are ready to collect as
+    // soon as the four-bar reaches its deployed pose after half a second.
     r.queueStartupDeploy();
+    r.rollers = 'in';
   }
 
   get scored() { return this.mode === 'highscore' ? this.hsScore : this.hubs.scoredBy[0]; }
@@ -254,7 +255,8 @@ export class SimWorld {
     r.navigate(null);
     r.spinUp = false;
     r.shoot = false;
-    r.rollers = 'off';
+    // Keep the current intake command when a driver takes over from the AI.
+    // Otherwise the first steering input silently disables startup collection.
     this.onControl?.('driver');
   }
 
