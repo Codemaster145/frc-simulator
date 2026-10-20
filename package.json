@@ -1,0 +1,46 @@
+{
+  "name": "cybercats-robot-simulator",
+  "version": "1.0.0",
+  "description": "FRC 2872 Wheatley CyberCats CAD viewer and simulator, adapted from jcorrea510/chuck-norris-viewer",
+  "scripts": {
+    "test": "pnpm run test:cad && pnpm run test:phys && pnpm run build && pnpm run e2e",
+    "dev": "vite",
+    "build": "tsc --noEmit && vite build",
+    "preview": "vite preview",
+    "model": "node --max-old-space-size=6144 scripts/optimize-model.mjs",
+    "field": "node --max-old-space-size=6144 scripts/optimize-field.mjs",
+    "test:phys": "vitest run tests/phys",
+    "soak": "vitest run tests/soak",
+    "e2e": "node scripts/check-cybercats.mjs && node scripts/check-cad-details.mjs && node scripts/check-gameplay-integration.mjs && node scripts/check-direction-controls.mjs && node scripts/verify.mjs --sim-only",
+    "collision": "node scripts/build-collision.mjs",
+    "test:cad": "node --test tests/cad/*.test.mjs",
+    "e2e:upstream-robot": "node scripts/verify.mjs"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "module",
+  "devDependencies": {
+    "@gltf-transform/core": "^4.5.1",
+    "@gltf-transform/extensions": "^4.5.1",
+    "@gltf-transform/functions": "^4.5.1",
+    "@types/three": "^0.186.0",
+    "draco3dgltf": "^1.5.7",
+    "meshoptimizer": "^1.3.0",
+    "playwright": "^1.64.1",
+    "pngjs": "^7.0.0",
+    "typescript": "^7.0.2",
+    "vite": "^8.3.4",
+    "vite-plugin-pwa": "^2.0.0",
+    "vitest": "^3.2.4",
+    "workbox-window": "7.4.1"
+  },
+  "dependencies": {
+    "@dimforge/rapier3d-compat": "^0.14.0",
+    "camera-controls": "^3.1.2",
+    "lucide-static": "^1.57.0",
+    "qrcode-generator": "^1.4.4",
+    "three": "^0.186.1",
+    "three-mesh-bvh": "^0.9.16"
+  }
+}

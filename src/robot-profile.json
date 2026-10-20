@@ -1,0 +1,62 @@
+{
+  "id": "cybercats-2872",
+  "name": "CyberCats",
+  "team": "FRC 2872 · Wheatley CyberCats",
+  "assets": {
+    "viewer": "models/cybercats.glb",
+    "parts": "models/cybercats.parts.json",
+    "simulation": "models/cybercats.glb"
+  },
+  "cad": {
+    "sourceSha256": "16f99acca5a84d074d8e3052af39287a139d8c0ce01bbb4e608bfd0ed713487d",
+    "units": "meters",
+    "yawDegrees": 155.56805667945238,
+    "groundZ": 7.764901912340333e-8,
+    "sourceUp": "+Z",
+    "forwardConfirmed": true,
+    "runtimeOrigin": [
+      0,
+      0,
+      0
+    ],
+    "preserveMaterials": true,
+    "bumperColorParts": [
+      "Foam"
+    ],
+    "bumperColorNote": "CAD Foam part is the red perimeter padding. This mapping is for visual color only, not collision dimensions.",
+    "viewerErrorMeters": 0.0003,
+    "note": "Source +Z becomes runtime +Y; chassis aligned and rotated 180 degrees from the initial intake-facing proposal. Runtime +Z is confirmed forward. Extended bounds are not collision dimensions.",
+    "forwardConfirmation": "Team confirmed forward is opposite Arthritis intake on 2026-10-17."
+  },
+  "physics": {
+    "status": "uncalibrated-demo",
+    "demoApproved": true,
+    "modelYawDegrees": 180,
+    "massKg": 56.381531591,
+    "bumperDimensionsMeters": null,
+    "centerOfMassMeters": [
+      0.002978917183838213,
+      0.17810472235098085,
+      -0.09126917838400778
+    ],
+    "driveSpecifications": null,
+    "shooterSpecifications": null,
+    "notice": "Uncalibrated demo physics · CyberCats CAD",
+    "massSource": "Team-supplied Onshape CAD mass: approximately 124.3 lb; physical robot not yet weighed.",
+    "chassisMeters": {
+      "width": 0.6985,
+      "length": 0.6985
+    },
+    "centerOfMassSourceInches": [
+      -1.593,
+      -3.223,
+      7.012
+    ],
+    "demoScope": "Drive, inertia, suspension, bumper/hull, intake capture and indexer transport remain approved uncalibrated demo physics. Ptooey uses one measured M–U release and CAD wheel envelopes. Hood distance table, speeds, turret limits and flywheel power calculations remain temporary. Arthritis follows measured four-bar/pin-slot geometry from deployed 0 degrees to an adjustable estimated 74-degree stow. Its field contact envelope comes from the actual CAD; roller/feed forces and actuator speeds remain demo values. The original V2 cylindrical guide and its bolted carrier follow the measured 42T shaft at 12:42 reduction. Independent internal roller/pinion spin is not yet configured; contact/feed forces remain demo values.",
+    "approval": "User approved temporary upstream demo physics; confirmed chassis, CAD mass and CAD COM applied."
+  },
+  "mechanisms": {
+    "status": "partial-cad-rig",
+    "note": "Ptooey turret and camera rotate together; hood pivots about the measured main M shaft, with one M–U exit and both roller banks driven. Hood angles/speeds and +/-180 degree turret travel are demo settings. Original V2 cylindrical guide, bolted plates, SplineXL stack, 12T/42T sprockets and chain animate while feeding. Revolute 2 rotation was confirmed by the team; external motor and stationary bearings stay fixed. Internal rollers travel with the carrier; relative spin remains unconfigured. Arthritis uses the measured four-bar, pin-slot links and 23:1 cycloidal output flanges; 0 degrees is confirmed deployed and 74 degrees is an adjustable simulation estimate. Original intake rollers animate; internal cycloidal eccentric motion is not fabricated."
+  }
+}

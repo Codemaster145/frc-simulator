@@ -1,0 +1,83 @@
+{
+  "Apache-2.0": [
+    {
+      "name": "@dimforge/rapier3d-compat",
+      "versions": [
+        "0.14.0"
+      ],
+      "paths": [
+        "C:\\Users\\sue66\\Documents\\ChatGPT\\FRC Simulator\\CyberCats-Robot-Simulator\\node_modules\\.pnpm\\@dimforge+rapier3d-compat@0.14.0\\node_modules\\@dimforge\\rapier3d-compat"
+      ],
+      "license": "Apache-2.0",
+      "homepage": "https://rapier.rs",
+      "description": "3-dimensional physics engine in Rust - official JS bindings. Compatibility package with inlined webassembly as base64."
+    }
+  ],
+  "MIT": [
+    {
+      "name": "camera-controls",
+      "versions": [
+        "3.1.2"
+      ],
+      "paths": [
+        "C:\\Users\\sue66\\Documents\\ChatGPT\\FRC Simulator\\CyberCats-Robot-Simulator\\node_modules\\.pnpm\\camera-controls@3.1.2_three@0.186.1\\node_modules\\camera-controls"
+      ],
+      "license": "MIT",
+      "author": "Yomotsu",
+      "homepage": "https://github.com/yomotsu/camera-controls#readme"
+    },
+    {
+      "name": "qrcode-generator",
+      "versions": [
+        "1.4.4"
+      ],
+      "paths": [
+        "C:\\Users\\sue66\\Documents\\ChatGPT\\FRC Simulator\\CyberCats-Robot-Simulator\\node_modules\\.pnpm\\qrcode-generator@1.4.4\\node_modules\\qrcode-generator"
+      ],
+      "license": "MIT",
+      "author": "Kazuhiko Arase",
+      "homepage": "https://github.com/kazuhikoarase/qrcode-generator#readme",
+      "description": "QR Code Generator implementation in JavaScript."
+    },
+    {
+      "name": "three",
+      "versions": [
+        "0.186.1"
+      ],
+      "paths": [
+        "C:\\Users\\sue66\\Documents\\ChatGPT\\FRC Simulator\\CyberCats-Robot-Simulator\\node_modules\\.pnpm\\three@0.186.1\\node_modules\\three"
+      ],
+      "license": "MIT",
+      "author": "mrdoob",
+      "homepage": "https://threejs.org/",
+      "description": "JavaScript 3D library"
+    },
+    {
+      "name": "three-mesh-bvh",
+      "versions": [
+        "0.9.16"
+      ],
+      "paths": [
+        "C:\\Users\\sue66\\Documents\\ChatGPT\\FRC Simulator\\CyberCats-Robot-Simulator\\node_modules\\.pnpm\\three-mesh-bvh@0.9.16_three@0.186.1\\node_modules\\three-mesh-bvh"
+      ],
+      "license": "MIT",
+      "author": "Garrett Johnson",
+      "homepage": "https://github.com/gkjohnson/three-mesh-bvh#readme",
+      "description": "A BVH implementation to speed up raycasting against three.js meshes."
+    }
+  ],
+  "ISC": [
+    {
+      "name": "lucide-static",
+      "versions": [
+        "1.57.0"
+      ],
+      "paths": [
+        "C:\\Users\\sue66\\Documents\\ChatGPT\\FRC Simulator\\CyberCats-Robot-Simulator\\node_modules\\.pnpm\\lucide-static@1.57.0\\node_modules\\lucide-static"
+      ],
+      "license": "ISC",
+      "homepage": "https://lucide.dev",
+      "description": "Lucide is a community-run fork of Feather Icons, open for anyone to contribute icons."
+    }
+  ]
+}

@@ -1,0 +1,44 @@
+import {chromium} from 'playwright';
+import assert from 'node:assert/strict';
+import fs from 'node:fs';
+const browser=await chromium.launch({args:['--use-angle=swiftshader','--enable-unsafe-swiftshader']});
+const errors=[],checks=[];let result;
+try{
+ const page=await browser.newPage({viewport:{width:1000,height:760},serviceWorkers:'block'});
+ page.on('pageerror',e=>errors.push(String(e)));
+ await page.addInitScript(()=>{window.__simLocal=true;localStorage.setItem('chuck-norris-settings-v2',JSON.stringify({quality:'battery',autoSpin:false,pitMode:0}));});
+ await page.goto('http://127.0.0.1:5187/');await page.waitForFunction(()=>window.__viewer?.state.ready,null,{timeout:180000});
+ result=await page.evaluate(()=>{
+  const {viewer:v,state:s,api,THREE:T}=window.__viewer;s.autoSpin=false;s.idleReset=false;v.spinning=false;
+  const center=id=>v.boxOfParts([id],false).getCenter(new T.Vector3()).toArray();
+  const ids=[1668,1684,1696,1748,2117,2160,1476,1328,1363,1499,1274];
+  const atRest=Object.fromEntries(ids.map(id=>[id,center(id)]));
+  api.selectSubsystem('turrets');v.setMechanismNow('ptooey-turret',90);v.syncPose();
+  const turned=Object.fromEntries(ids.map(id=>[id,center(id)]));
+  v.setMechanismNow('ptooey-flywheel',45);v.syncPose();
+  const wheelNodes=v.mechanisms.get('ptooey-flywheel').nodes.map(n=>n.node.quaternion.toArray());
+  v.setMechanismNow('dye-drive',70);v.syncPose();const chain=center(1363),motor=center(1476);
+  v.setMechanismNow('dye-drive',0);v.syncPose();const chainReset=center(1363);
+  const sourceGeometries=v.meshes.map(m=>m.geometry);v.setSimRendering(new Map(v.meshes.map(m=>[m.name,new T.BoxGeometry()])),50);
+  const lodPreserved=v.meshes.every((m,i)=>m.geometry===sourceGeometries[i]);v.setSimRendering(null,null);
+  api.selectSubsystem('electrical');v.settle();
+  return {atRest,turned,wheelNodes,chain,motor,chainReset,lodPreserved,parts:v.parts.count,electrical:v.subsystemPids('electrical').length,swerve:v.parts.subsystemOf(v.parts.file?.partNode?.[139]??0)};
+ });
+ const dist=(a,b)=>Math.hypot(...a.map((x,i)=>x-b[i]));
+ assert.equal(result.parts,2269);assert.ok(result.lodPreserved);checks.push('All 2269 parts retained; Simulate geometry swap preserves moving partitions');
+ for(const id of [1668,1696,1476,1328])assert.ok(dist(result.atRest[id],result.turned[id])<1e-6,`Stationary part ${id}`);
+ for(const id of [1748,2117,2160])assert.ok(dist(result.atRest[id],result.turned[id])>.04,`Rotating part ${id}`);
+ checks.push('Upper shooter, camera and gear-mounted bearing stacks rotate; fixed mounting plate, external motor and indexer stay fixed');
+ assert.ok(result.wheelNodes.every(q=>Math.abs(q[0])>.3));checks.push('Actual flywheel shaft rotates inside the turret group');
+ assert.ok(dist(result.chain,result.atRest[1363])>.01);assert.ok(dist(result.chainReset,result.atRest[1363])<1e-6);assert.ok(dist(result.motor,result.atRest[1476])<1e-6);
+ checks.push('Original chain links follow the measured closed path; motor housing stays fixed and reset restores original CAD position');
+ await page.screenshot({path:'docs/mechanism-review/electronics.png',timeout:180000});
+ assert.ok(result.electrical>0);checks.push('Dedicated Electronics category remains selectable, including the turret-mounted camera');
+ await page.evaluate(()=>{const a=window.__viewer;a.api.overview();a.viewer.settle();});
+ await page.locator('.dock .tool').filter({hasText:'Simulate'}).click();await page.waitForFunction(()=>window.__viewer.state.sim?.active,null,{timeout:180000});
+ const sim=await page.evaluate(()=>{const a=window.__viewer;return {parts:a.stats().parts,partitions:a.viewer.meshes.filter(m=>m.userData.cadPartition).length,triangles:a.viewer.meshes.reduce((n,m)=>n+(m.geometry.index?.count??m.geometry.attributes.position.count)/3,0)};});
+ assert.equal(sim.parts,2269);assert.equal(sim.triangles,1141549);checks.push('Playable Simulate mode retains exactly 1,141,549 CAD triangles without duplicated assemblies');
+ await page.locator('.sim-hud [data-act=exit]').click();assert.ok(await page.evaluate(()=>!window.__viewer.state.sim));
+ assert.deepEqual(errors,[]);checks.push('No page errors; Simulate exits back to the viewer');
+ console.log('PASS',JSON.stringify({checks,sim}));
+}finally{fs.writeFileSync('test-results/cybercats/mechanism-browser.json',JSON.stringify({checks,result,errors},null,2));await browser.close();}

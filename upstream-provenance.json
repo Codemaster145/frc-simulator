@@ -1,0 +1,371 @@
+{
+  "repository": "https://github.com/jcorrea510/chuck-norris-viewer",
+  "commit": "f6829a1baaeb6b8623d42dbdd39eb347509337ba",
+  "excluded": [
+    "public/models/",
+    "public/icons/",
+    "overnight/media/"
+  ],
+  "files": [
+    {
+      "path": ".github/workflows/deploy.yml",
+      "ok": true,
+      "sha": "cae3891ea9434b0f93126540f407df3ef50a9605"
+    },
+    {
+      "path": "overnight/CREDITS.md",
+      "ok": true,
+      "sha": "1e103d154a3477b934f48e62dcc093959ab95241"
+    },
+    {
+      "path": "index.html",
+      "ok": true,
+      "sha": "37605856f94d3293755ca4accae4e5eac03e32c4"
+    },
+    {
+      "path": "overnight/DECISIONS.md",
+      "ok": true,
+      "sha": "252ade8f2d325fc893ad9bea9ba9d9cc46dbf584"
+    },
+    {
+      "path": "overnight/BACKLOG.md",
+      "ok": true,
+      "sha": "b42a2d95affb7945149861bee292b072bc967d7b"
+    },
+    {
+      "path": "overnight/ARCHITECTURE.md",
+      "ok": true,
+      "sha": "484822e5025ad6c217aae6821928fa08195a357a"
+    },
+    {
+      "path": "README.md",
+      "ok": true,
+      "sha": "d7c8357c7f475a73510fbf6de1e52d5847b5608e"
+    },
+    {
+      "path": ".gitignore",
+      "ok": true,
+      "sha": "21f2f7fa2e2824b76a8a275d57b81e3cb08e6d96"
+    },
+    {
+      "path": "overnight/MORNING.md",
+      "ok": true,
+      "sha": "6253bd2a457a580e5092a7c091cfc9fab6aec8f6"
+    },
+    {
+      "path": "overnight/LOG.md",
+      "ok": true,
+      "sha": "7ffd77a7b58cd2d9bafa1aa2c022e207a1490d0a"
+    },
+    {
+      "path": "public/field/LICENSE-AdvantageScope.txt",
+      "ok": true,
+      "sha": "923ab25fe60e17153339be68c720306d462270af"
+    },
+    {
+      "path": "package.json",
+      "ok": true,
+      "sha": "eb93026097914b6b977d0c60a483b0adb70c6acb"
+    },
+    {
+      "path": "overnight/PHYSICS.md",
+      "ok": true,
+      "sha": "5f34bfcc055db5f45248673ca4373565e83931db"
+    },
+    {
+      "path": "public/field/field-2026.json",
+      "ok": true,
+      "sha": "e01c8c1e3a9d024b86921d1c5117db51629bf973"
+    },
+    {
+      "path": "package-lock.json",
+      "ok": true,
+      "sha": "70ab2b8430685be6941eed58fcb18128fa6482ae"
+    },
+    {
+      "path": "public/field/field-collision.json",
+      "ok": true,
+      "sha": "1ab543c06141c8a4510cb3079b84adc28f41e20d"
+    },
+    {
+      "path": "scripts/make-icons.mjs",
+      "ok": true,
+      "sha": "3b33702674be52a23f0e3abe2e73748b83d3bf6a"
+    },
+    {
+      "path": "scripts/measure.mjs",
+      "ok": true,
+      "sha": "7d18a34d1347c3d1a3beaec91f8a66aa3e125619"
+    },
+    {
+      "path": "scripts/build-collision.mjs",
+      "ok": true,
+      "sha": "c5a028c1ca240c155130eec6f572a12e1dc2a10d"
+    },
+    {
+      "path": "public/field/fuel.glb",
+      "ok": true,
+      "sha": "f85c42ba06a9e1344729987f23d0844f6c24eb02"
+    },
+    {
+      "path": "public/field/field-collision.bin",
+      "ok": true,
+      "sha": "f6e2c22c4d4ac700d66be8b9351fb5613eac6a9e"
+    },
+    {
+      "path": "scripts/media.mjs",
+      "ok": true,
+      "sha": "d69205489ed012217f89f01cd9ae624979c6e5fc"
+    },
+    {
+      "path": "scripts/optimize-field.mjs",
+      "ok": true,
+      "sha": "7a9a7ad402e2227b9f91523fe5fe5b74c8beb54f"
+    },
+    {
+      "path": "public/field/field-2026.glb",
+      "ok": true,
+      "sha": "b90aa0b5bed19dc4729ce46610b49da5c94d2b4f"
+    },
+    {
+      "path": "scripts/simlook.mjs",
+      "ok": true,
+      "sha": "45e1aefe411ea33c553782ff4417f3887fb60959"
+    },
+    {
+      "path": "scripts/soundcheck.mjs",
+      "ok": true,
+      "sha": "8c7fa95f4570096e66a8ea02b989f861f036f57a"
+    },
+    {
+      "path": "scripts/optimize-model.mjs",
+      "ok": true,
+      "sha": "1f785108ed5f5b0e51aecae40d817bd96cc573c8"
+    },
+    {
+      "path": "scripts/verify.mjs",
+      "ok": true,
+      "sha": "25810072ffe31d1e4ffceb0a31cbc8e64754035a"
+    },
+    {
+      "path": "src/config.ts",
+      "ok": true,
+      "sha": "c70a86586b48d6f92554030a81f04d733c4858ca"
+    },
+    {
+      "path": "scripts/swivel-trace.mjs",
+      "ok": true,
+      "sha": "18d20f11db535bf6015f5254107ca2a503ff8083"
+    },
+    {
+      "path": "src/icons.ts",
+      "ok": true,
+      "sha": "dd4e9317332aaad68317c2b40f72ea6d07947936"
+    },
+    {
+      "path": "src/knownparts.ts",
+      "ok": true,
+      "sha": "8bd78afdcb6bf0be4b26d8446664223b1aaf47cb"
+    },
+    {
+      "path": "src/effects.ts",
+      "ok": true,
+      "sha": "04f7c5807bab6e67de5aa84af513e2e2301b1333"
+    },
+    {
+      "path": "src/main.ts",
+      "ok": true,
+      "sha": "7b5f2c1be62bb44ff1fdad1bce771add22256a21"
+    },
+    {
+      "path": "src/materials.ts",
+      "ok": true,
+      "sha": "470b74a5cb48cb0de442ed7a486663cb6490a86d"
+    },
+    {
+      "path": "src/parts.ts",
+      "ok": true,
+      "sha": "928d45e5ea177c13f1ce7f444a1db326906708cf"
+    },
+    {
+      "path": "src/sim/audio.ts",
+      "ok": true,
+      "sha": "50ae6b7acbfa300a09f37a4d580437f77ae0c8cb"
+    },
+    {
+      "path": "src/settings.ts",
+      "ok": true,
+      "sha": "85bb02e4f5c9941d629a9726454856099527aa7d"
+    },
+    {
+      "path": "src/sim/backend.ts",
+      "ok": true,
+      "sha": "505d38a6b804c967b5bf54d92fa31bc7c2c435dd"
+    },
+    {
+      "path": "src/sim/controls-page.ts",
+      "ok": true,
+      "sha": "8909cac42a2445a0ba38d3f41d4dcc3631d770a4"
+    },
+    {
+      "path": "src/sim/brain.ts",
+      "ok": true,
+      "sha": "7f4e54997dfa2655b7651cad716dd0f92e814021"
+    },
+    {
+      "path": "src/sim/drivepad.ts",
+      "ok": true,
+      "sha": "c11ccbd61bd077fb749fa4c843203c37b706b16d"
+    },
+    {
+      "path": "src/sim/debug.ts",
+      "ok": true,
+      "sha": "1226bf4ae9d81be6366262f7b1b225c16dc91a1a"
+    },
+    {
+      "path": "src/sim/field.ts",
+      "ok": true,
+      "sha": "5b1c4afb1ffbb3fd94add352538f34fd3d302a44"
+    },
+    {
+      "path": "src/sim/index.ts",
+      "ok": true,
+      "sha": "5fa173e7a256d23e98d97928d189291a763744cf"
+    },
+    {
+      "path": "src/sim/phys/engine.ts",
+      "ok": true,
+      "sha": "8c4e0423285bb54410436cc27fcbab34fc0c9415"
+    },
+    {
+      "path": "src/sim/phys/aim.ts",
+      "ok": true,
+      "sha": "08d719413852309c1c84fe705a3883d1d2ff1487"
+    },
+    {
+      "path": "src/sim/input.ts",
+      "ok": true,
+      "sha": "687c0fca056ea10493017d2341ef0d9f5d19412c"
+    },
+    {
+      "path": "src/sim/phys/config.ts",
+      "ok": true,
+      "sha": "5c7b4f6d60205139832222acd37da16507012a07"
+    },
+    {
+      "path": "src/sim/phys/hub.ts",
+      "ok": true,
+      "sha": "e29314b3b494ecda4f01161d360ce7f4b75fe3ec"
+    },
+    {
+      "path": "src/sim/phys/fuel.ts",
+      "ok": true,
+      "sha": "2b9b831d226871e4d0a03fe8db26d60f1ba0447a"
+    },
+    {
+      "path": "src/sim/local.ts",
+      "ok": true,
+      "sha": "27daa78843e9c95120f5606620ba09f70dff0013"
+    },
+    {
+      "path": "src/sim/phys/rng.ts",
+      "ok": true,
+      "sha": "93c9874dcf2bbb9fc4faf5e006467f94086eec0a"
+    },
+    {
+      "path": "src/sim/planner.worker.ts",
+      "ok": true,
+      "sha": "ef8a18875e49a4ea8dc5bb4e6f868283e8898fef"
+    },
+    {
+      "path": "src/sim/phys/robot.ts",
+      "ok": true,
+      "sha": "b76a0d4f08de2c19525c61a07002b8f63646161e"
+    },
+    {
+      "path": "src/sim/planner.ts",
+      "ok": true,
+      "sha": "5ec2f186784d40abcebe4f8953efca08b554b09f"
+    },
+    {
+      "path": "src/sim/route.ts",
+      "ok": true,
+      "sha": "62af2bd34339aa5529f90edd9e2025107a02aa6e"
+    },
+    {
+      "path": "src/sim/world.ts",
+      "ok": true,
+      "sha": "fd0a020fd09dfc701102eb91927f04a69da8d94f"
+    },
+    {
+      "path": "src/sim/sim.worker.ts",
+      "ok": true,
+      "sha": "df47d91476b03de693193aa9b24cb44b5aa147a9"
+    },
+    {
+      "path": "src/sound.ts",
+      "ok": true,
+      "sha": "cc464ff87108a60c8121358982dc5a86cb5581f2"
+    },
+    {
+      "path": "src/standin.ts",
+      "ok": true,
+      "sha": "db463d8e04a1ab22551b7bbf1b172729e1e3f866"
+    },
+    {
+      "path": "src/style.css",
+      "ok": true,
+      "sha": "9608dec5989e51787c9612460ddf505ec0d73a90"
+    },
+    {
+      "path": "src/viewer.ts",
+      "ok": true,
+      "sha": "d5b9989a2aad47116231630999d4214fb6b3dc75"
+    },
+    {
+      "path": "src/studio.ts",
+      "ok": true,
+      "sha": "c0c49d758569cc7d029ea2c1f39e49af77a81664"
+    },
+    {
+      "path": "src/subsystems.json",
+      "ok": true,
+      "sha": "f527470a94f4d879c58c8b723a8a2c65b6eafc5a"
+    },
+    {
+      "path": "tests/phys/helpers.ts",
+      "ok": true,
+      "sha": "638f027beed8c45976f976149552e02a3b2e713b"
+    },
+    {
+      "path": "src/ui.ts",
+      "ok": true,
+      "sha": "3cdf659fdf83da95c329076a62746413be488e7d"
+    },
+    {
+      "path": "tests/phys/realism.test.ts",
+      "ok": true,
+      "sha": "21dbbcb2d4865ae1fe010e3a2bbc525e81a56d3c"
+    },
+    {
+      "path": "tests/soak/soak.test.ts",
+      "ok": true,
+      "sha": "a1364b0b38d93edbcf70630c9f5796cb80911b28"
+    },
+    {
+      "path": "tsconfig.json",
+      "ok": true,
+      "sha": "5c817a6dbeadd3b1b4daf8e97a21a1b7005bd1db"
+    },
+    {
+      "path": "vite.config.ts",
+      "ok": true,
+      "sha": "3d1bc32aba2f577cef25deee0a0a2c6a75158f61"
+    },
+    {
+      "path": "vitest.config.ts",
+      "ok": true,
+      "sha": "cfec8eb9c858f5de550c75cb01592579ba41a19b"
+    }
+  ]
+}

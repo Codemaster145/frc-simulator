@@ -1,0 +1,9 @@
+{
+  "status": "uncalibrated-demo",
+  "note": "Placeholder distance-to-launch-angle values retained from the approved upstream demo. Replace with measured CyberCats calibration; these are not physical travel limits.",
+  "minDegrees": 45,
+  "maxDegrees": 72,
+  "degreesPerSecond": 120,
+  "hub": [[1.4, 72], [5.553846153846154, 45]],
+  "ferryDegrees": 45
+}

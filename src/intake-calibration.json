@@ -1,0 +1,11 @@
+{
+  "status": "estimated-from-cad",
+  "deployedDegrees": 0,
+  "stowedDegrees": 74,
+  "maximumDegrees": 74,
+  "degreesPerSecond": 70,
+  "accelerationDegreesPerSecondSquared": 240,
+  "cycloidalReduction": 23,
+  "motorToOutputReduction": 57.5,
+  "note": "Simulation estimate, not a measured hard stop. 74 degrees provides 14 mm front clearance inside the exported bumper foam footprint. Half-degree triangle-surface sweep of fixed parts and moving linkage bodies found no new intersections; source foam overlap at 0 degrees clears near 10 degrees. Bearing interfaces are excluded. This discrete audit is not physical clearance certification. Four-bar and rear pin-slot geometry retained. Internal eccentric-disc animation omitted; speed/acceleration are demo values."
+}

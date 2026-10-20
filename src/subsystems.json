@@ -1,0 +1,137 @@
+{
+  "_readme": [
+    "CyberCats CAD group names and membership. No unverified mechanism pivots or physical specifications. Shared visual profile: robot-profile.json."
+  ],
+  "robot": {
+    "name": "CyberCats",
+    "team": "FRC 2872 · Wheatley CyberCats",
+    "season": "2026 REBUILT",
+    "front": "+z",
+    "pitModeSeconds": 15,
+    "autoSpinResumeSeconds": 8,
+    "secondsPerRevolution": 52,
+    "exclude": []
+  },
+  "subsystems": [
+    {
+      "id": "swerve",
+      "name": "Swerve Drivetrain",
+      "short": "Swerve",
+      "icon": "move",
+      "summary": "Four SDS MK4n assemblies identified in the CAD. Drive specifications await confirmation.",
+      "match": [
+        "SDS MK4n",
+        "vroom VROOM"
+      ],
+      "specs": [
+        {
+          "label": "CAD assemblies",
+          "value": "4 × SDS MK4n"
+        }
+      ],
+      "highlights": [
+        "Original CAD geometry",
+        "Individual part inspection",
+        "Joint setup pending"
+      ]
+    },
+    {
+      "id": "electrical",
+      "name": "Electronics",
+      "short": "Electrical",
+      "icon": "cpu",
+      "summary": "Named electrical components from the uploaded CAD.",
+      "match": [
+        "Robot Radio",
+        "Orange Pi",
+        "PDH",
+        "MPM",
+        "Main Breaker",
+        "Robot Battery",
+        "Camera and Cover",
+        "CANCoder"
+      ],
+      "specs": [],
+      "highlights": [
+        "Original CAD geometry",
+        "Individual part inspection",
+        "Joint setup pending"
+      ]
+    },
+    {
+      "id": "intake",
+      "name": "Arthritis — Intake",
+      "short": "Intake",
+      "icon": "arrow-down-to-line",
+      "summary": "Collects FUEL from the field. Actual four-bar and pin-slot linkage; 0° is confirmed deployed, 74° is an estimated stowed limit. Roller speeds and feed forces are demo values.",
+      "match": [
+        "Arthritis",
+        "Roller Solutions"
+      ],
+      "specs": [],
+      "highlights": [
+        "Measured CAD linkage",
+        "Configurable estimated 74° stow",
+        "Original roller geometry"
+      ]
+    },
+    {
+      "id": "indexer",
+      "name": "a thunk a thunk — Dye Rotor / Indexer",
+      "short": "Indexer",
+      "icon": "layers",
+      "summary": "Original V2 cylindrical guide and bolted carrier rotate with the 42T SplineXL shaft at 12:42 reduction. Chain and output shafts animate while feeding; external motor and mounts stay fixed. Internal roller spin and FUEL contact forces remain uncalibrated.",
+      "match": [
+        "a thunk a thunk",
+        "V2 Dye Rotor",
+        "Flopper Assemb"
+      ],
+      "specs": [],
+      "highlights": [
+        "Original cylindrical guide and chain",
+        "Measured vertical shaft · 12:42 drive",
+        "Internal roller spin pending calibration"
+      ]
+    },
+    {
+      "id": "turrets",
+      "name": "Ptooey — Shooter",
+      "short": "Shooter",
+      "icon": "crosshair",
+      "summary": "Single M–U FUEL exit. Turret and camera rotate together; the adjustable hood follows the main flywheel shaft. Aiming table, speeds and travel limits remain uncalibrated.",
+      "match": [
+        "Ptooey"
+      ],
+      "specs": [],
+      "highlights": [
+        "Actual turret and hood CAD",
+        "One measured FUEL exit",
+        "Adjustable demo calibration"
+      ]
+    },
+    {
+      "id": "frame",
+      "name": "Frame & Structure",
+      "short": "Frame",
+      "icon": "box",
+      "summary": "Remaining structural components and unmatched CAD parts.",
+      "match": [],
+      "specs": [
+        {
+          "label": "Confirmed chassis",
+          "value": "27.5 × 27.5 in (square)"
+        },
+        {
+          "label": "CAD mass (not weighed)",
+          "value": "~124.3 lb"
+        }
+      ],
+      "highlights": [
+        "Original CAD geometry",
+        "Individual part inspection",
+        "Joint setup pending"
+      ]
+    }
+  ],
+  "mechanisms": []
+}

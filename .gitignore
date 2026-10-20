@@ -1,0 +1,10 @@
+cad/
+node_modules/
+dist/
+.DS_Store
+shots/
+test-results/
+*.log
+overnight/media/frames/
+overnight/
+.indexer-measure.mjs
