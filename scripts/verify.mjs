@@ -371,7 +371,8 @@ async function simTests() {
   check(!!res && await page.evaluate(() => !document.querySelector('.sim-result').hidden), `results: ${res?.score} FUEL, ${res?.shots} shots, best ${res?.bestRate}/s, personal best ${res?.best}`);
   await shot(page, size, 'hs-results');
   const stored = await page.evaluate(() => localStorage.getItem('chuck-norris-highscore'));
-  check(stored !== null && Number(stored) === res.best, `personal best saved (${stored})`);
+  check(res.best === 0 ? stored === null || stored === '0' : stored !== null && Number(stored) === res.best,
+    `personal best ${res.best === 0 ? 'remains empty after a zero-score round' : 'saved'} (${stored})`);
   await page.evaluate(() => { const c = window.__viewer.state.sim.controls.touch; c.mx = 0; c.my = 0; });
   await tapEl(page, '.sim-result [data-act=hs-exit]');
   await step(0.3);
@@ -383,6 +384,9 @@ async function simTests() {
   for (const v of ['driver', 'follow', 'overhead']) {
     await page.evaluate((v) => { const sim = window.__viewer.state.sim; sim.paused = false; sim.setView(v); for (let i = 0; i < 120; i++) sim.frame(1 / 60); sim.paused = true; }, v);
     await page.waitForTimeout(1500); // interface fades (0.6 s) finish first; they aren't flicker
+    // SwiftShader can paint the touch button's new CSS state one screenshot late.
+    await page.screenshot({ timeout: 240000 });
+    await page.waitForTimeout(500);
     const a = await page.screenshot({ timeout: 240000 });
     await page.waitForTimeout(500);
     const b = await page.screenshot({ timeout: 240000 });

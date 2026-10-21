@@ -71,6 +71,7 @@ export class DebugOverlay {
         `robot ${r.speed.toFixed(2)} m/s · battery ${r.battery.toFixed(2)} V · ${r.totalCurrent.toFixed(0)} A${r.brownout ? ' BROWNOUT' : ''}`,
         `wheels N ${r.modules.map((m) => m.N.toFixed(0)).join('/')}${r.slipping ? ' slip' : ''} · pitch ${(r.pitch * 57.3).toFixed(1)}° roll ${(r.roll * 57.3).toFixed(1)}°`,
         `flywheels ${r.turrets.map((t) => `${(t.fly * 9.549).toFixed(0)}/${(t.flyGoal * 9.549).toFixed(0)} rpm`).join(' · ')}${r.ferry ? ' · FERRY' : ''}`,
+        `intake ${fr.status.intakeDown ? 'down' : 'up'} · rollers ${fr.status.rollers ? 'in' : 'off'} · FUEL ${fr.status.intakeFlow?.stored ?? 0}/${fr.status.capacity} · available ${fr.status.intakeFlow?.available ?? 0} · waiting ${fr.status.intakeFlow?.waiting ?? 0} · indexer ${fr.status.intakeFlow?.indexerBlocked ? 'full' : 'clear'} · recovery ${fr.status.intakeFlow?.jamRecovery ? 'on' : 'off'}`,
       ].join('\n');
     }
   }

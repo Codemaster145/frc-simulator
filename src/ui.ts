@@ -213,7 +213,7 @@ export class UI {
       <button class="sim-exit glass icon-btn" data-act="exit" aria-label="Exit the simulation" title="Exit">${icon('x')}</button>
       <div class="sim-score glass" aria-live="polite">
         <span class="sim-timer" hidden></span>
-        <b class="sim-n">0</b><span class="sim-unit">FUEL</span>
+        <b class="sim-n">0</b><span class="sim-unit">FUEL scored</span>
         <span class="sim-rate" hidden><b class="sim-rate-n">0</b>/s</span>
       </div>
       <div class="sim-chip sim-ferry" hidden>${icon('undo-2')}<span>Ferry</span></div>
@@ -416,7 +416,7 @@ export class UI {
   simStatus(s: SimStatus) {
     const q = <T extends Element = HTMLElement>(sel: string) => this.simHud.querySelector(sel) as T;
     const intake=s.intake;
-    q('.sim-intake-readout').textContent=intake?`Intake ${intake.currentDegrees.toFixed(1)}° → ${intake.targetDegrees.toFixed(1)}° · Estimated limit ${intake.maximumDegrees}°${intake.blocked?' · Hopper full':''}`:'Intake —';
+    q('.sim-intake-readout').textContent=intake?`Intake ${intake.currentDegrees.toFixed(1)}° → ${intake.targetDegrees.toFixed(1)}° · Estimated limit ${intake.maximumDegrees}° · Stored ${s.stored}/${s.capacity}${s.intakeFlow?.full?' · Full':''}${intake.blocked?' · Retraction blocked':''}`:'Intake —';
     const hood = s.shooter;
     q('.sim-hood-readout').textContent = hood ? `Hood ${hood.currentDegrees.toFixed(1)}° · Target ${hood.targetDegrees.toFixed(1)}° · Goal ${hood.distance.toFixed(2)} m · ${hood.manual ? 'Manual' : 'Auto'}` : 'Hood — · Target — · Goal —';
     q('.sim-n').textContent = s.loading ? '…' : String(s.scored);

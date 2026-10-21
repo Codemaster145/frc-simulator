@@ -11,7 +11,7 @@
     "field": "node --max-old-space-size=6144 scripts/optimize-field.mjs",
     "test:phys": "vitest run tests/phys",
     "soak": "vitest run tests/soak",
-    "e2e": "node scripts/check-cybercats.mjs && node scripts/check-exploded-cad.mjs && node scripts/check-cad-details.mjs && node scripts/check-gameplay-integration.mjs && node scripts/check-direction-controls.mjs && node scripts/verify.mjs --sim-only",
+    "e2e": "node scripts/check-cybercats.mjs && node scripts/check-exploded-cad.mjs && node scripts/check-cad-details.mjs && node scripts/check-gameplay-integration.mjs && node scripts/check-direction-controls.mjs && node scripts/check-intake-jam.mjs && node scripts/verify.mjs --sim-only",
     "collision": "node scripts/build-collision.mjs",
     "test:cad": "node --test tests/cad/*.test.mjs",
     "e2e:upstream-robot": "node scripts/verify.mjs"

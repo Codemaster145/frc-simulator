@@ -53,7 +53,7 @@ export const TURRETS = [
 const FEED_FIXED = (_side: number): [number, number, number][] => [
   [0,0.215,0.045], [TURRETS[0].pivot[0],0.24,0], TURRETS[0].pivot,
 ];
-export const CAPACITY_DOWN = 48, CAPACITY_UP = 32;
+export const CAPACITY_DOWN = 4, CAPACITY_UP = 4;
 export const capacityAt = (deg: number) => Math.round(CAPACITY_DOWN + (CAPACITY_UP - CAPACITY_DOWN) * Math.min(1, Math.max(0, deg / INTAKE.upDeg)));
 /** hopper interior (for counting what's on board) */
 const HOP = { hx: 0.33, back: -0.03, floorY: 0.1, top: 0.62 };
@@ -104,6 +104,7 @@ export class Robot {
   intakeDown = true; intakeAngle = 0; private armV = 0; private startupDeployStep = -1; capacityBlocked = false;
   rollers: 'in' | 'off' | 'out' = 'off';
   captured: Captured[] = [];
+  private accepted = new Set<number>();
   // shooting
   shoot = false; spinUp = false;
   hoodOverride: number | null = null;
@@ -205,7 +206,9 @@ export class Robot {
       this.intakeBall.push({ c, x: s * (HOP.hx + 0.012), z: 0.54, y: 0.34, q:c.rotation() });
     }
     coupler(Rp.ColliderDesc.cylinder(ROLLER.hx, ROLLER.r).setRotation(rotZ(Math.PI / 2)), ROLLER.z, ROLLER.y); // intake roller
-    coupler(Rp.ColliderDesc.cuboid(0.3, 0.06, 0.01).setRotation(rotX(0.35)), 0.63, 0.29);  // kicker frame / crash bar
+    // Collision proxy for the solid kicker/crash-bar throat behind the roller:
+    // only FUEL actually gripped by the intake can pass into the hopper.
+    coupler(Rp.ColliderDesc.cuboid(HOP.hx + 0.05, 0.35, 0.012), 0.52, 0.35);
     // the hopper floor over the intake (polycarb kicker ramp, back side): slopes down toward the
     // crank rollers so fuel on it rolls back into the hopper (captured fuel passes under it)
     coupler(Rp.ColliderDesc.cuboid(0.32, 0.008, 0.13).setRotation(rotX(-Math.atan2(0.07, 0.24))), 0.52, 0.345);
@@ -230,6 +233,8 @@ export class Robot {
     this.manual = null; this.order = null; this.done = true;
     for (const c of this.captured) this.releaseCapture(c);
     this.captured = [];
+    this.accepted.clear();
+    this.onboard = [];
     for (const t of this.turrets) { for (const lb of t.lane) this.fuel.place(lb.i, this.toWorld(lb.from[0], Math.max(lb.from[1], 0.3), lb.from[2])); t.lane = []; t.a = 0; t.w = 0; t.fly = 0; t.ready = false; }
     this.readPose(true);
     this.updateMechanismColliders();
@@ -260,6 +265,7 @@ export class Robot {
     indices.forEach((i, k) => {
       const lx = -0.2 + (k % 4) * 0.135, lz = 0.06 + (Math.floor(k / 4) % 2) * 0.15, ly = 0.3 + Math.floor(k / 8) * 0.15;
       this.fuel.place(i, this.toWorld(lx, ly, lz));
+      this.accepted.add(i);
     });
   }
 
@@ -319,7 +325,7 @@ export class Robot {
   get speed() { return Math.hypot(this.vx, this.vz); }
   get capacity() { return capacityAt(this.intakeAngle); }
   /** fuel on board: hopper + indexer + on its way in */
-  get load() { return this.stored + this.captured.length; }
+  get load() { return this.accepted.size + this.turrets.reduce((n,t)=>n+t.lane.length,0); }
   get stored() { return this.onboard.length + this.turrets.reduce((n,t)=>n+t.lane.length,0); }
   get shooting() { return this.shoot && this.stored > 0; }
   get flywheelReady() { return this.turrets.every((t) => t.ready); }
@@ -491,6 +497,7 @@ export class Robot {
   private tmp = [0, 0, 0];
   private intakeForces() {
     const f = this.fuel;
+    for(const i of this.accepted)if(!f.isFree(i))this.accepted.delete(i);
     const [dz, dy] = couplerOffset(this.intakeAngle);
     const deployed = this.intakeAngle < 3;
     if(!this.disabled&&this.rollers!=='off')this.intakeRollerPhase+=STEP*INTAKE.rollerSpeed/ROLLER.r*(this.rollers==='in'?1:-1);
@@ -505,9 +512,10 @@ export class Robot {
       const ddx = f.pos[o] - this.p[0], ddz = f.pos[o + 2] - this.p[2];
       if (ddx * ddx + ddz * ddz > 1.4) continue;
       this.toLocal(f.pos[o], f.pos[o + 1], f.pos[o + 2], L);
-      if (Math.abs(L[0]) < HOP.hx && L[2] > HOP.back && L[2] < 0.66 + dz && L[1] > HOP.floorY && L[1] < HOP.top + 0.1 && !this.isCaptured(i)) {
+      if (Math.abs(L[0]) < HOP.hx && L[2] > HOP.back && L[2] < 0.66 + dz && L[1] > HOP.floorY && L[1] < HOP.top + 0.1 && !this.isCaptured(i) && this.accepted.has(i)) {
         if (L[2] < 0.48 + dz || L[1] > 0.3 + dy) onboard.push(i);
       }
+      if (this.accepted.has(i) && !this.isCaptured(i) && (Math.abs(L[0]) > .45 || L[2] < -.2 || L[2] > .85 || L[1] > .95)) this.accepted.delete(i);
       // the roller: friction-limited grab of anything it touches
       if (!pull || this.isCaptured(i)) continue;
       const roller=intakePose(this.intakeAngle).rollers[0],rz=-roller[2],ry=roller[1];
@@ -521,6 +529,7 @@ export class Robot {
       const bv = b.linvel();
       const rel = this.velToLocal(bv.x - pv[0], bv.y - pv[1], bv.z - pv[2]);
       if (rel[2] > INTAKE.rollerSpeed * 0.25) continue;
+      this.accepted.add(i);
       this.captured.push({ i, s: 0, x: Math.max(-0.26, Math.min(0.26, L[0])), phase: 'pinch' });
       f.colliders[i].setCollisionGroups(groups(GROUP.BALL, GROUP.FIELD | GROUP.BALL));
       this.onIntake?.(i);
@@ -532,7 +541,7 @@ export class Robot {
     for (let k = this.captured.length - 1; k >= 0; k--) {
       const c = this.captured[k];
       const b = f.bodies[c.i];
-      if (f.st[c.i] !== BS.FREE && f.st[c.i] !== BS.FLYING) { this.captured.splice(k, 1); continue; }
+      if (f.st[c.i] !== BS.FREE && f.st[c.i] !== BS.FLYING) { this.accepted.delete(c.i); this.captured.splice(k, 1); continue; }
       const speed = this.rollers === 'in' ? INTAKE.feedSpeed : this.rollers === 'out' ? -INTAKE.feedSpeed * 1.1 : 0;
       // the next ball can't overtake the one ahead
       const ahead = this.captured.find((o) => o !== c && o.s > c.s && Math.abs(o.x - c.x) < 2 * R);
@@ -558,7 +567,7 @@ export class Robot {
       const jl = Math.hypot(jx, jy, jz);
       if (jl > jmax) { jx *= jmax / jl; jy *= jmax / jl; jz *= jmax / jl; }
       b.applyImpulse({ x: jx, y: jy, z: jz }, true);
-      if (lag > 0.25) { this.releaseCapture(c); this.captured.splice(k, 1); continue; }
+      if (lag > 0.25) { this.releaseCapture(c); this.accepted.delete(c.i); this.captured.splice(k, 1); continue; }
       if (c.s >= len - 1e-3 && this.rollers === 'in') {
         // over the secondary roller: it drops into the hopper moving backward
         this.releaseCapture(c);
@@ -567,6 +576,7 @@ export class Robot {
         this.captured.splice(k, 1);
       } else if (c.s <= 0 && this.rollers === 'out') {
         this.releaseCapture(c);
+        this.accepted.delete(c.i);
         const fwd = this.velToWorld(0, 0.3, 2.4);
         b.setLinvel({ x: pv[0] + fwd[0], y: pv[1] + fwd[1], z: pv[2] + fwd[2] }, true);
         this.captured.splice(k, 1);
@@ -624,6 +634,7 @@ export class Robot {
           const o = best * 3;
           const L = this.toLocal(f.pos[o], f.pos[o + 1], f.pos[o + 2]);
           f.toIndexer(best);
+          this.accepted.delete(best);
           t.lane.push({ i: best, s: -bd, from: [L[0], L[1], L[2]] });
           this.onboard = this.onboard.filter((x) => x !== best);
         }
