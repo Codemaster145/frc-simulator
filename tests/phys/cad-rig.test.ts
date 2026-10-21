@@ -18,7 +18,24 @@ test('swerve turret assemblies are drivetrain; named electronics retain their ca
  const p=metadata();correctCadClassification(p);
  for(const n of [139,146,234,246,699,703,811,817])expect(p.subsystems[p.tree[n][3]]).toBe('swerve');
  for(const n of [3,4,5,9,11,12,72,195,687,765,2394])expect(p.subsystems[p.tree[n][3]]).toBe('electrical');
+ for(const n of [25,36,43,57])expect(p.subsystems[p.tree[n][3]],`chassis node ${n}`).toBe('frame');
  expect(p.subsystems[p.tree[1887][3]]).toBe('turrets'); // Support remains inspectable with its turret; it is not a moving selection.
+});
+
+test('explosion carriers keep chassis central and mechanism-mounted electronics with their assemblies',async()=>{
+ const b=fs.readFileSync('public/models/cybercats.glb');
+ const model=(await new GLTFLoader().setMeshoptDecoder(MeshoptDecoder).parseAsync(b.buffer.slice(b.byteOffset,b.byteOffset+b.byteLength),'')).scene;
+ const p=metadata(),rig=rigCadModel(model,p,CAD_MOTIONS);
+ function carrier(pid:number){let found:string|undefined;rig.traverse(o=>{
+  if(!(o instanceof T.Mesh)||found)return;
+  const ids=o.geometry.getAttribute('_partid');
+  for(let i=0;i<ids.count;i++)if(ids.getX(i)===pid){for(let parent=o.parent;parent;parent=parent.parent)if(parent.userData.subsystem){found=parent.userData.subsystem;break;}break;}
+ });return found;}
+ expect(carrier(23)).toBe('frame'); // chassis MAXTube
+ expect(carrier(251)).toBe('swerve'); // swerve-mounted camera cover
+ const turretCamera=p.partNode.findIndex(n=>n===2394);
+ expect(p.subsystems[p.tree[2394][3]]).toBe('electrical'); // remains selectable as electronics
+ expect(carrier(turretCamera)).toBe('turrets');
 });
 
 test('V2 cylindrical guide follows the 42T shaft without moving external supports or other mechanisms',async()=>{

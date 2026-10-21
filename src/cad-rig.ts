@@ -2,10 +2,17 @@ import * as THREE from 'three';
 import type {PartsFile} from './parts';
 export interface CadMotion {id:string;name:string;subsystem:string;parent?:string;pivot:[number,number,number];axis:[number,number,number];nodes?:number[];parts?:number[];min:number;max:number;hidden?:boolean;continuous?:boolean;drive?:{id:string;ratio:number};chainIndex?:number;intakeBody?:'upper'|'lower'|'coupler'|'pin';states?:Record<string,number>;}
 export function correctCadClassification(parts:PartsFile):void{
- const swerve=parts.subsystems.indexOf('swerve'),shooter=parts.subsystems.indexOf('turrets');
+ const swerve=parts.subsystems.indexOf('swerve'),shooter=parts.subsystems.indexOf('turrets'),frame=parts.subsystems.indexOf('frame');
+ const drive=parts.tree.findIndex(t=>parts.names[t[0]]==='vroom VROOM');
  for(let i=0;i<parts.tree.length;i++){
-  if(parts.tree[i][3]!==shooter)continue;
-  for(let n=i;n>=0;n=parts.tree[n][1])if(/^(vroom VROOM|SDS MK4n)$/i.test(parts.names[parts.tree[n][0]])){parts.tree[i][3]=swerve;break;}
+  let child=i;
+  while(child>0&&parts.tree[child][1]!==drive)child=parts.tree[child][1];
+  if(child<=0||parts.tree[child][1]!==drive)continue;
+  const assembly=parts.names[parts.tree[child][0]];
+  // The drive export also contains bumper/chassis fasteners and rails as direct children.
+  // SDS modules remain swerve; their camera covers keep the electrical inspection category.
+  if(assembly!=='SDS MK4n'&&assembly!=='Assembly 1')parts.tree[i][3]=frame;
+  else if(parts.tree[i][3]===shooter)parts.tree[i][3]=swerve;
  }
 }
 
@@ -46,6 +53,8 @@ export function rigCadModel(model:THREE.Object3D,parts:PartsFile,motions:CadMoti
  for(let pid=1;pid<parts.partNode.length;pid++)parts.tree[parts.partNode[pid]][4]=parts.mechanisms.indexOf(motionOf.get(pid)??'');
  const root=new THREE.Group();root.name='CyberCats rig';
  const subs=new Map<string,THREE.Group>(),parents=new Map<string,THREE.Object3D>();
+ const drive=parts.tree.findIndex(t=>parts.names[t[0]]==='vroom VROOM');
+ function inDrivetrain(node:number){for(let n=node;n>0;n=parts.tree[n][1])if(n===drive)return true;return false;}
  function parentFor(sub:string,motion?:string):THREE.Object3D{
   let parent=subs.get(sub);
   if(!parent){parent=new THREE.Group();parent.userData={subsystem:sub};parent.name=`subsystem:${sub}`;subs.set(sub,parent);root.add(parent);}
@@ -67,14 +76,18 @@ export function rigCadModel(model:THREE.Object3D,parts:PartsFile,motions:CadMoti
   if(!(o instanceof THREE.Mesh))return;
   const g=o.geometry as THREE.BufferGeometry,ids=g.getAttribute('_partid')??g.getAttribute('_PARTID');
   if(!ids)throw new Error('CAD mesh has no selectable part IDs');
-  const count=g.index?.count??ids.count,buckets=new Map<string,{sub:string;motion?:string;indices:number[]}>();
+  const count=g.index?.count??ids.count,buckets=new Map<string,{sub:string;visual:string;motion?:string;indices:number[]}>();
   for(let i=0;i<count;i+=3){
    const tri=[0,1,2].map(k=>g.index?g.index.getX(i+k):i+k),pid=ids.getX(tri[0]);
    if(tri.some(v=>ids.getX(v)!==pid))throw new Error('CAD triangle crosses part identities');
-   const node=parts.partNode[pid],sub=parts.subsystems[parts.tree[node][3]],motion=motionOf.get(pid),key=`${sub}/${motion??''}`;
-   if(!buckets.has(key))buckets.set(key,{sub,motion,indices:[]});buckets.get(key)!.indices.push(...tri);
+   const node=parts.partNode[pid],sub=parts.subsystems[parts.tree[node][3]],motion=motionOf.get(pid);
+   // A part retains its inspection category, but the CAD assembly that carries it determines
+   // where it travels in an exploded view (e.g. the turret camera and swerve-mounted sensors).
+   const visual=motion?chains.get(motion)![0].subsystem:sub==='electrical'&&inDrivetrain(node)?'swerve':sub;
+   const key=`${visual}/${sub}/${motion??''}`;
+   if(!buckets.has(key))buckets.set(key,{sub,visual,motion,indices:[]});buckets.get(key)!.indices.push(...tri);
   }
-  for(const {sub,motion,indices} of buckets.values()){
+  for(const {sub,visual,motion,indices} of buckets.values()){
    const remap=new Map<number,number>(),used:number[]=[],index:number[]=[];
    for(const old of indices){if(!remap.has(old)){remap.set(old,used.length);used.push(old);}index.push(remap.get(old)!);}
    const geometry=new THREE.BufferGeometry();
@@ -88,7 +101,7 @@ export function rigCadModel(model:THREE.Object3D,parts:PartsFile,motions:CadMoti
    }
    geometry.setIndex(index);
    const mesh=new THREE.Mesh(geometry,o.material);mesh.name=o.name;mesh.matrix.copy(o.matrixWorld);mesh.matrixAutoUpdate=false;
-   mesh.userData={...o.userData,subsystem:sub,collision:false,cadPartition:true};parentFor(sub,motion).add(mesh);
+   mesh.userData={...o.userData,subsystem:sub,collision:false,cadPartition:true};parentFor(visual,motion).add(mesh);
   }
  });
  return root;

@@ -164,8 +164,9 @@ export class Simulation {
     };
     v.setSimRendering(this.lod, 50);
     v.setFocus(null);
-    v.setExploded(false);
     for (const m of v.mechanisms.values()) v.setMechanism(m.id, m.def, false);
+    // Simulation must never inherit an in-flight CAD explosion, even at low render rates.
+    v.setExploded(false, true);
     v.simActive = true;
     v.spinning = false;
     // the robot drives about its drivetrain center (the swerve modules)

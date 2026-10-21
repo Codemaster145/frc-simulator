@@ -1,5 +1,6 @@
 import * as THREE from 'three';
 import {rigCadModel} from './cad-rig';
+import {planExplodedLayout} from './explode-layout';
 import {intakePose} from './intake-linkage';
 import {CAD_MOTIONS} from './cad-motions';
 import {chainPose,CHAIN_TRAVEL_PER_RADIAN} from './cad-chain-motion';
@@ -301,7 +302,7 @@ export class Viewer {
         if (!solid.has(finish)) solid.set(finish, makeSolidMaterial(finish, this.state, src));
         src?.dispose();
         m.material = solid.get(finish)!;
-        m.userData.subsystem = id;
+        m.userData.subsystem ??= id;
         m.castShadow = finish !== 'polycarb';
         m.receiveShadow = true;
         m.customDepthMaterial = depthMat;
@@ -382,16 +383,19 @@ export class Viewer {
     this.root.rotation.y = this.frontRotation();
     this.root.updateMatrixWorld(true);
     const box = new THREE.Box3().setFromObject(this.root);
-    const center = box.getCenter(new THREE.Vector3());
     const size = box.getSize(new THREE.Vector3());
     this.robotHeight = size.y;
     this.robotRadius = box.getBoundingSphere(new THREE.Sphere()).radius;
 
-    // Pins, explode directions and outward viewing angles.
+    // Pins, explode directions and outward viewing angles. Move only complete assembly roots;
+    // their mechanism pivots and individual CAD part transforms remain untouched.
     const homeDir = new THREE.Vector3().setFromSphericalCoords(1, HOME_POLAR, HOME_AZIMUTH);
-    const ordered = [...this.subs.values()].map((s) => ({ s, box: new THREE.Box3().setFromObject(s.group) }));
-    ordered.sort((a, b) => a.box.getCenter(new THREE.Vector3()).y - b.box.getCenter(new THREE.Vector3()).y);
-    ordered.forEach(({ s, box: b }, rank) => {
+    const boxes = new Map([...this.subs.values()].map(s => [s.id, new THREE.Box3().setFromObject(s.group)]));
+    const layout = planExplodedLayout(boxes);
+    const center = box.getCenter(new THREE.Vector3());
+    const worldToRoot = this.root.quaternion.clone().invert();
+    for (const s of this.subs.values()) {
+      const b = boxes.get(s.id)!;
       const c = b.getCenter(new THREE.Vector3());
       const target = c.clone().addScaledVector(homeDir, this.robotRadius * 0.9);
       target.y = Math.max(target.y, b.max.y);
@@ -399,11 +403,8 @@ export class Viewer {
       const dx = c.x - center.x, dz = c.z - center.z;
       const r = Math.hypot(dx, dz);
       s.outward = r > 0.08 ? Math.atan2(dx, dz) : null;
-      const spread = rank === 0 ? 0 : Math.min(1, r / 0.1) * Math.max(size.x, size.z) * 0.32;
-      const lift = rank === 0 ? 0 : 0.07 + rank * 0.085;
-      const dirWorld = new THREE.Vector3(r > 1e-3 ? (dx / r) * spread : 0, lift, r > 1e-3 ? (dz / r) * spread : 0);
-      s.explodeDir.copy(dirWorld.applyQuaternion(this.root.quaternion.clone().invert()));
-    });
+      s.explodeDir.copy(layout.get(s.id)!).applyQuaternion(worldToRoot);
+    }
 
     this.frameOverview({ top: 0, right: 0, bottom: 0, left: 0 }, false, true);
     this.shadowDirty = true;
@@ -873,9 +874,12 @@ export class Viewer {
   get lifted() { return this.lift.target > 0; }
 
   // ---------------------------------------------------------------- explode
-  setExploded(on: boolean) {
+  setExploded(on: boolean, immediate = false) {
     this.explode.target = on ? 1 : 0;
-    if (this.reducedMotion) this.explode.snap();
+    if (immediate || this.reducedMotion) {
+      this.explode.snap();
+      this.applyPose(this.explode.value, this.lift.value, [...this.mechanisms.values()].map(m => m.angle.value));
+    }
     this.shadowDirty = true;
     this.dirty = true;
   }
