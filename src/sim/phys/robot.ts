@@ -53,7 +53,7 @@ export const TURRETS = [
 const FEED_FIXED = (_side: number): [number, number, number][] => [
   [0,0.215,0.045], [TURRETS[0].pivot[0],0.24,0], TURRETS[0].pivot,
 ];
-export const CAPACITY_DOWN = 4, CAPACITY_UP = 4;
+export const CAPACITY_DOWN = 48, CAPACITY_UP = 32;
 export const capacityAt = (deg: number) => Math.round(CAPACITY_DOWN + (CAPACITY_UP - CAPACITY_DOWN) * Math.min(1, Math.max(0, deg / INTAKE.upDeg)));
 /** hopper interior (for counting what's on board) */
 const HOP = { hx: 0.33, back: -0.03, floorY: 0.1, top: 0.62 };
@@ -65,7 +65,11 @@ export interface DriveOrder {
 }
 
 interface Module { px: number; pz: number; steer: number; wheel: number; current: number; supply: number; N: number; slip: boolean; contact: boolean; comp: number }
-interface Captured { i: number; s: number; x: number; phase: 'pinch' | 'ramp' | 'back' }
+interface Captured { i: number; s: number; x: number; phase: 'pinch' | 'ramp' | 'back'; since: number }
+export interface IntakeBallDiagnostic {
+  id:number; stage:'entrance'|'transport'|'exit'; position:number[]; velocity:number[];
+  driven:boolean; contacts:string[]; secondsInside:number; reachedExit:boolean; indexerBlocked:boolean;
+}
 interface LaneBall { i: number; s: number; from: [number, number, number] }
 export interface Turret {
   id: string; side: number; pivot: [number, number, number]; base: number;
@@ -81,6 +85,9 @@ export class Robot {
   readonly body: RAPIER.RigidBody;
   private intakeHull!: RAPIER.Collider;
   private intakeBall: { c: RAPIER.Collider; x: number; z: number; y: number; q:{x:number;y:number;z:number;w:number} }[] = [];
+  private intakeColliderNames=new Map<number,string>();
+  private intakeSeen=new Map<number,number>();
+  private transportClock=0;
   private crankBed!: RAPIER.Collider;
   private shooterWheels:RAPIER.Collider[]=[];
   readonly modules: Module[];
@@ -104,7 +111,6 @@ export class Robot {
   intakeDown = true; intakeAngle = 0; private armV = 0; private startupDeployStep = -1; capacityBlocked = false;
   rollers: 'in' | 'off' | 'out' = 'off';
   captured: Captured[] = [];
-  private accepted = new Set<number>();
   // shooting
   shoot = false; spinUp = false;
   hoodOverride: number | null = null;
@@ -195,23 +201,23 @@ export class Robot {
     // crank bed (the two hopper rollers on the powered link): continues the floor deployed, stands up stowed
     this.crankBed = add(Rp.ColliderDesc.cuboid(0.32, 0.016, 0.075).setTranslation(0, 0.25, 0.32), BALL);
     // coupler: front wall, side plates over the intake, intake roller and crash bar
-    const coupler = (desc: RAPIER.ColliderDesc, z: number, y: number) => {
+    const coupler = (desc: RAPIER.ColliderDesc, z: number, y: number, name:string) => {
       const c = add(desc.setTranslation(0, y, z), BALL);
       this.intakeBall.push({ c, x: 0, z, y, q:c.rotation() });
+      this.intakeColliderNames.set(c.handle,name);
       return c;
     };
-    coupler(Rp.ColliderDesc.cuboid(0.33, 0.155, 0.012), 0.654, 0.396);                    // front wall
+    coupler(Rp.ColliderDesc.cuboid(0.33, 0.155, 0.012), 0.654, 0.396,'front wall');
     for (const s of [-1, 1]) {
       const c = add(Rp.ColliderDesc.cuboid(0.012, 0.2, 0.12).setTranslation(s * (HOP.hx + 0.012), 0.34, 0.54), BALL);
       this.intakeBall.push({ c, x: s * (HOP.hx + 0.012), z: 0.54, y: 0.34, q:c.rotation() });
+      this.intakeColliderNames.set(c.handle,s<0?'left side plate':'right side plate');
     }
-    coupler(Rp.ColliderDesc.cylinder(ROLLER.hx, ROLLER.r).setRotation(rotZ(Math.PI / 2)), ROLLER.z, ROLLER.y); // intake roller
-    // Collision proxy for the solid kicker/crash-bar throat behind the roller:
-    // only FUEL actually gripped by the intake can pass into the hopper.
-    coupler(Rp.ColliderDesc.cuboid(HOP.hx + 0.05, 0.35, 0.012), 0.52, 0.35);
+    coupler(Rp.ColliderDesc.cylinder(ROLLER.hx, ROLLER.r).setRotation(rotZ(Math.PI / 2)), ROLLER.z, ROLLER.y,'front roller');
+    coupler(Rp.ColliderDesc.cuboid(0.3, 0.06, 0.01).setRotation(rotX(0.35)), 0.63, 0.29,'kicker frame');
     // the hopper floor over the intake (polycarb kicker ramp, back side): slopes down toward the
     // crank rollers so fuel on it rolls back into the hopper (captured fuel passes under it)
-    coupler(Rp.ColliderDesc.cuboid(0.32, 0.008, 0.13).setRotation(rotX(-Math.atan2(0.07, 0.24))), 0.52, 0.345);
+    coupler(Rp.ColliderDesc.cuboid(0.32, 0.008, 0.13).setRotation(rotX(-Math.atan2(0.07, 0.24))), 0.52, 0.345,'kicker ramp');
     this.modules = ROBOT.modules.map(([px, pz]) => ({ px, pz, steer: 0, wheel: 0, current: 0, supply: 0, N: 0, slip: false, contact: true, comp: 0 }));
     this.turrets = TURRETS.map((t) => ({
       id: t.id, side: t.side, pivot: t.pivot, base: t.base, a: 0, w: 0, goal: 0, err: 1,
@@ -233,7 +239,7 @@ export class Robot {
     this.manual = null; this.order = null; this.done = true;
     for (const c of this.captured) this.releaseCapture(c);
     this.captured = [];
-    this.accepted.clear();
+    this.intakeSeen.clear();this.transportClock=0;
     this.onboard = [];
     for (const t of this.turrets) { for (const lb of t.lane) this.fuel.place(lb.i, this.toWorld(lb.from[0], Math.max(lb.from[1], 0.3), lb.from[2])); t.lane = []; t.a = 0; t.w = 0; t.fly = 0; t.ready = false; }
     this.readPose(true);
@@ -265,7 +271,6 @@ export class Robot {
     indices.forEach((i, k) => {
       const lx = -0.2 + (k % 4) * 0.135, lz = 0.06 + (Math.floor(k / 4) % 2) * 0.15, ly = 0.3 + Math.floor(k / 8) * 0.15;
       this.fuel.place(i, this.toWorld(lx, ly, lz));
-      this.accepted.add(i);
     });
   }
 
@@ -325,7 +330,7 @@ export class Robot {
   get speed() { return Math.hypot(this.vx, this.vz); }
   get capacity() { return capacityAt(this.intakeAngle); }
   /** fuel on board: hopper + indexer + on its way in */
-  get load() { return this.accepted.size + this.turrets.reduce((n,t)=>n+t.lane.length,0); }
+  get load() { return this.stored + this.captured.length; }
   get stored() { return this.onboard.length + this.turrets.reduce((n,t)=>n+t.lane.length,0); }
   get shooting() { return this.shoot && this.stored > 0; }
   get flywheelReady() { return this.turrets.every((t) => t.ready); }
@@ -497,7 +502,7 @@ export class Robot {
   private tmp = [0, 0, 0];
   private intakeForces() {
     const f = this.fuel;
-    for(const i of this.accepted)if(!f.isFree(i))this.accepted.delete(i);
+    this.transportClock+=STEP;
     const [dz, dy] = couplerOffset(this.intakeAngle);
     const deployed = this.intakeAngle < 3;
     if(!this.disabled&&this.rollers!=='off')this.intakeRollerPhase+=STEP*INTAKE.rollerSpeed/ROLLER.r*(this.rollers==='in'?1:-1);
@@ -507,15 +512,16 @@ export class Robot {
     const pull = this.rollers === 'in' && deployed && !this.disabled;
     for (let i = 0; i < f.n; i++) {
       const st = f.st[i];
-      if (st !== BS.FREE && st !== BS.FLYING) continue;
+      if (st !== BS.FREE && st !== BS.FLYING) { this.intakeSeen.delete(i); continue; }
       const o = i * 3;
       const ddx = f.pos[o] - this.p[0], ddz = f.pos[o + 2] - this.p[2];
-      if (ddx * ddx + ddz * ddz > 1.4) continue;
+      if (ddx * ddx + ddz * ddz > 1.4) { this.intakeSeen.delete(i); continue; }
       this.toLocal(f.pos[o], f.pos[o + 1], f.pos[o + 2], L);
-      if (Math.abs(L[0]) < HOP.hx && L[2] > HOP.back && L[2] < 0.66 + dz && L[1] > HOP.floorY && L[1] < HOP.top + 0.1 && !this.isCaptured(i) && this.accepted.has(i)) {
+      if(Math.abs(L[0])<.38&&L[2]>.35&&L[2]<.75&&L[1]>.02&&L[1]<.6){if(!this.intakeSeen.has(i))this.intakeSeen.set(i,this.transportClock);}
+      else this.intakeSeen.delete(i);
+      if (Math.abs(L[0]) < HOP.hx && L[2] > HOP.back && L[2] < 0.66 + dz && L[1] > HOP.floorY && L[1] < HOP.top + 0.1 && !this.isCaptured(i)) {
         if (L[2] < 0.48 + dz || L[1] > 0.3 + dy) onboard.push(i);
       }
-      if (this.accepted.has(i) && !this.isCaptured(i) && (Math.abs(L[0]) > .45 || L[2] < -.2 || L[2] > .85 || L[1] > .95)) this.accepted.delete(i);
       // the roller: friction-limited grab of anything it touches
       if (!pull || this.isCaptured(i)) continue;
       const roller=intakePose(this.intakeAngle).rollers[0],rz=-roller[2],ry=roller[1];
@@ -529,8 +535,7 @@ export class Robot {
       const bv = b.linvel();
       const rel = this.velToLocal(bv.x - pv[0], bv.y - pv[1], bv.z - pv[2]);
       if (rel[2] > INTAKE.rollerSpeed * 0.25) continue;
-      this.accepted.add(i);
-      this.captured.push({ i, s: 0, x: Math.max(-0.26, Math.min(0.26, L[0])), phase: 'pinch' });
+      this.captured.push({ i, s: 0, x: Math.max(-0.26, Math.min(0.26, L[0])), phase: 'pinch', since:this.transportClock });
       f.colliders[i].setCollisionGroups(groups(GROUP.BALL, GROUP.FIELD | GROUP.BALL));
       this.onIntake?.(i);
     }
@@ -541,7 +546,7 @@ export class Robot {
     for (let k = this.captured.length - 1; k >= 0; k--) {
       const c = this.captured[k];
       const b = f.bodies[c.i];
-      if (f.st[c.i] !== BS.FREE && f.st[c.i] !== BS.FLYING) { this.accepted.delete(c.i); this.captured.splice(k, 1); continue; }
+      if (f.st[c.i] !== BS.FREE && f.st[c.i] !== BS.FLYING) { this.captured.splice(k, 1); continue; }
       const speed = this.rollers === 'in' ? INTAKE.feedSpeed : this.rollers === 'out' ? -INTAKE.feedSpeed * 1.1 : 0;
       // the next ball can't overtake the one ahead
       const ahead = this.captured.find((o) => o !== c && o.s > c.s && Math.abs(o.x - c.x) < 2 * R);
@@ -567,7 +572,16 @@ export class Robot {
       const jl = Math.hypot(jx, jy, jz);
       if (jl > jmax) { jx *= jmax / jl; jy *= jmax / jl; jz *= jmax / jl; }
       b.applyImpulse({ x: jx, y: jy, z: jz }, true);
-      if (lag > 0.25) { this.releaseCapture(c); this.accepted.delete(c.i); this.captured.splice(k, 1); continue; }
+      if (lag > 0.25) {
+        // A crowded throat can push a gripped ball ahead of the guide point.
+        // Dropping capture here re-enables robot collision while the ball is
+        // still inside the intake, pinning it against the kicker/side plates.
+        // Retain roller drive until it reaches the exit or leaves the intake.
+        const actual=this.toLocal(t.x,t.y,t.z);
+        if(Math.abs(actual[0])>.4||actual[2]<.3||actual[2]>.82||actual[1]<-.02||actual[1]>.7){
+          this.releaseCapture(c);this.captured.splice(k,1);continue;
+        }
+      }
       if (c.s >= len - 1e-3 && this.rollers === 'in') {
         // over the secondary roller: it drops into the hopper moving backward
         this.releaseCapture(c);
@@ -576,7 +590,6 @@ export class Robot {
         this.captured.splice(k, 1);
       } else if (c.s <= 0 && this.rollers === 'out') {
         this.releaseCapture(c);
-        this.accepted.delete(c.i);
         const fwd = this.velToWorld(0, 0.3, 2.4);
         b.setLinvel({ x: pv[0] + fwd[0], y: pv[1] + fwd[1], z: pv[2] + fwd[2] }, true);
         this.captured.splice(k, 1);
@@ -584,6 +597,25 @@ export class Robot {
     }
   }
   private isCaptured(i: number) { for (const c of this.captured) if (c.i === i) return true; return false; }
+  /** Generated only for ?debug=physics; no extra per-ball data crosses the worker boundary during normal play. */
+  intakeDiagnostics():IntakeBallDiagnostic[]{
+    const out:IntakeBallDiagnostic[]=[];const f=this.fuel,W=this.eng.world;
+    for(const [i,since] of this.intakeSeen){
+      if(!f.isFree(i))continue;
+      const o=i*3,p=this.toLocal(f.pos[o],f.pos[o+1],f.pos[o+2]);
+      const c=this.captured.find(v=>v.i===i);
+      const contacts=new Set<string>();
+      W.contactPairsWith(f.colliders[i],other=>{
+        const name=this.intakeColliderNames.get(other.handle);
+        if(name)W.contactPair(f.colliders[i],other,m=>{if(m.numSolverContacts()>0)contacts.add(name);});
+      });
+      out.push({id:i,stage:c?'transport':p[2]<.48?'exit':'entrance',position:p.map(v=>+v.toFixed(3)),
+        velocity:[f.vel[o],f.vel[o+1],f.vel[o+2]].map(v=>+v.toFixed(3)),
+        driven:!!c&&this.rollers==='in',contacts:[...contacts],secondsInside:+(this.transportClock-(c?.since??since)).toFixed(2),
+        reachedExit:p[2]<.48&&!c,indexerBlocked:this.turrets.every(t=>t.lane.length>=3)});
+    }
+    return out.sort((a,b)=>b.secondsInside-a.secondsInside);
+  }
   private releaseCapture(c: Captured) { this.fuel.colliders[c.i].setCollisionGroups(IG.ball); }
   private laneFree(x: number) { for (const c of this.captured) if (Math.abs(c.x - x) < 2 * R - 0.01 && c.s < 2 * R + 0.02) return false; return true; }
   velToLocal(vx: number, vy: number, vz: number) { const a = this.toLocal(this.p[0] + vx, this.p[1] + vy, this.p[2] + vz); return a; }
@@ -634,7 +666,6 @@ export class Robot {
           const o = best * 3;
           const L = this.toLocal(f.pos[o], f.pos[o + 1], f.pos[o + 2]);
           f.toIndexer(best);
-          this.accepted.delete(best);
           t.lane.push({ i: best, s: -bd, from: [L[0], L[1], L[2]] });
           this.onboard = this.onboard.filter((x) => x !== best);
         }

@@ -7,6 +7,7 @@
 import type { DriverInput, FieldData, SimMode, SimStatus } from './world';
 import type { NetHit } from './phys/hub';
 import type { CollisionIndex } from './phys/engine';
+import type { IntakeBallDiagnostic } from './phys/robot';
 
 export interface RobotFrame {
   x: number; y: number; z: number; th: number; vx: number; vz: number; speed: number; pitch: number; roll: number;
@@ -32,7 +33,7 @@ export interface Frame {
   impacts: number[];
   respawned: boolean;
   plannerWorst: number;
-  debug?: { vertices: Float32Array; colors: Float32Array; contacts: Float32Array };
+  debug?: { vertices: Float32Array; colors: Float32Array; contacts: Float32Array; intake: IntakeBallDiagnostic[] };
 }
 
 export interface Backend {

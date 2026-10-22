@@ -49,7 +49,7 @@ export interface SimStatus {
   hs: { phase: HsPhase; t: number; result: HsResult | null } | null;
   loading: boolean;
   intake?: {currentDegrees:number;targetDegrees:number;maximumDegrees:number;blocked:boolean};
-  intakeFlow?: {stored:number;available:number;waiting:number;indexerBlocked:boolean;full:boolean;jamRecovery:boolean};
+  intakeFlow?: {stored:number;available:number;waiting:number;indexerBlocked:boolean;full:boolean};
   shooter?: { currentDegrees: number; targetDegrees: number; distance: number; manual: boolean };
 }
 
@@ -72,7 +72,7 @@ export class SimWorld {
   private chuteClock = 0;
   /** staged layout: index → start position, and which balls start parked or preloaded */
   private starts: number[][];
-  /** original preload bodies, staged off-field for the empty four-FUEL start */
+  /** the original eight FUEL preloaded in the robot */
   preloadIdx: number[] = [];
   // High Score
   hsPhase: HsPhase = 'countdown';
@@ -115,7 +115,7 @@ export class SimWorld {
 
   /**
    * The field model's 456 staged FUEL, 40 staged in the NEUTRAL ZONE, and eight
-   * original preload bodies held off-field for the empty start, 504 in all.
+   * physical preloads in the robot, 504 in all.
    */
   private layout(): number[][] {
     const r = FUEL.radius;
@@ -142,7 +142,7 @@ export class SimWorld {
     this.hubs.clear();
     for (let i = 0; i < f.n; i++) {
       const p = this.starts[i];
-      if (this.preloadIdx.includes(i)) { f.park(i,[-8.6-(i%4)*.15,.8,3.1+Math.floor((i-this.preloadIdx[0])/4)*.15]); continue; }
+      if (this.preloadIdx.includes(i)) continue;
       // outpost chutes and anything staged outside the field wait off the field
       if (Math.abs(p[0]) > 8.2 || Math.abs(p[2]) > 4.0) f.park(i, p);
       else { f.place(i, p); f.bodies[i].sleep(); }
@@ -158,6 +158,8 @@ export class SimWorld {
     r.shoot = false; r.spinUp = false; r.rollers = 'off';
     r.place(-6.1, mode === 'highscore' ? 0 : 1.0, Math.PI / 2);
     r.setIntakeNow(true);
+    // Restore the original eight physical match-start preloads and positions.
+    r.preload(this.preloadIdx);
     this.hubs.scoredBy[0] = this.hubs.scoredBy[1] = 0;
     this.hsScore = 0; this.hsShots = 0; this.hsBestRate = 0; this.hsResult = null; this.hsT = 0;
     if (mode === 'highscore') { this.hsPhase = 'countdown'; r.disabled = true; this.onHsPhase?.('countdown'); }
@@ -379,10 +381,10 @@ export class SimWorld {
     return {
       mode: this.mode, scored: this.scored, rate: this.rate, shooting: r.shoot && r.stored > 0, ferry: r.ferry,
       outOfRange: r.shoot && r.outOfRange, control: this.control, resumeIn: this.resumeIn,
-      intakeDown: r.intakeDown, rollers: r.rollers === 'in', stored: r.load, capacity: r.capacity,
+      intakeDown: r.intakeDown, rollers: r.rollers === 'in', stored: r.stored, capacity: r.capacity,
       intake:{currentDegrees:r.intakeAngle,targetDegrees:r.intakeDown?0:r.intakeMaximum,maximumDegrees:r.intakeMaximum,blocked:r.capacityBlocked},
-      intakeFlow:{stored:r.load,available:Math.max(0,r.capacity-r.load),waiting:r.captured.length,
-        indexerBlocked:r.turrets.every(t=>t.lane.length>=3),full:r.load>=r.capacity,jamRecovery:false},
+      intakeFlow:{stored:r.stored,available:Math.max(0,r.capacity-r.load),waiting:r.captured.length,
+        indexerBlocked:r.turrets.every(t=>t.lane.length>=3),full:r.load>=r.capacity},
       shooter: { currentDegrees: r.turrets[0].hood * 180 / Math.PI, targetDegrees: r.turrets[0].hoodGoal * 180 / Math.PI, distance: r.turrets[0].distance, manual: r.hoodOverride !== null },
       hs: this.mode === 'highscore' ? { phase: this.hsPhase, t: this.hsPhase === 'play' ? Math.max(0, HS_SECONDS - this.hsT) : this.hsPhase === 'countdown' ? Math.max(0, HS_COUNTDOWN - this.hsT) : 0, result: this.hsResult } : null,
       loading,

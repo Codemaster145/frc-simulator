@@ -61,6 +61,9 @@ test('AI recovery does not retract the deployed startup intake on its own',async
 test('first driving handoff collects the starting FUEL pile after automatic deployment',async()=>{
  const w=await makeWorld();try{
   // Driving alone must not turn off the rollers that automatic deployment enabled.
+  // Clear the match-start preloads to leave capacity for this pickup test.
+  for(const i of w.preloadIdx)w.fuel.park(i,[20,0,i*.01]);
+  w.fuel.syncAll();
   run(w,.5);
   const r=w.robot;let caught=0;r.onIntake=()=>caught++;
   for(let i=0;i<12;i++){
@@ -80,6 +83,8 @@ test('FUEL already touching the collection region is captured on the first activ
  const w=await makeWorld();try{
   // Take control while the intake is still lowering, then overlap the roller just
   // before the deployed pose. Collection checks positions each step, not only entry events.
+  for(const i of w.preloadIdx)w.fuel.park(i,[20,0,i*.01]);
+  w.fuel.syncAll();
   w.step(input({mx:1}));
   run(w,.5-2/120);
   const r=w.robot;let caught=0;r.onIntake=()=>caught++;
@@ -121,6 +126,8 @@ test('manual roller toggle and arm commands still stop, stow, redeploy, and coll
   expect(w.robot.rollers).toBe('in');
   w.setIntakeCommand('retract');run(w,2);expect(w.robot.intakeAngle).toBe(74);
   w.setIntakeCommand('deploy');run(w,2);expect(w.robot.intakeAngle).toBe(0);
+  for(const i of w.preloadIdx)w.fuel.park(i,[20,0,i*.01]);
+  w.fuel.syncAll();
   let caught=0;w.robot.onIntake=()=>caught++;
   w.fuel.place(0,w.robot.toWorld(0,.075,.65));w.fuel.syncAll();
   run(w,.25);

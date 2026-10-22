@@ -32,7 +32,7 @@ export function frameOf(w: SimWorld, alpha: number, steps: number, physMs: numbe
         const c = b.collider(k);
         W.contactPairsWith(c, (o) => W.contactPair(c, o, (m) => { for (let i = 0; i < m.numSolverContacts() && pts.length < 600; i++) { const p = m.solverContactPoint(i); pts.push(p.x, p.y, p.z); } }));
       }
-      return { vertices: d.vertices.slice(), colors: d.colors.slice(), contacts: new Float32Array(pts) };
+      return { vertices: d.vertices.slice(), colors: d.colors.slice(), contacts: new Float32Array(pts), intake:r.intakeDiagnostics() };
     })() : undefined,
   };
 }

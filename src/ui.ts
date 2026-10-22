@@ -416,7 +416,8 @@ export class UI {
   simStatus(s: SimStatus) {
     const q = <T extends Element = HTMLElement>(sel: string) => this.simHud.querySelector(sel) as T;
     const intake=s.intake;
-    q('.sim-intake-readout').textContent=intake?`Intake ${intake.currentDegrees.toFixed(1)}° → ${intake.targetDegrees.toFixed(1)}° · Estimated limit ${intake.maximumDegrees}° · Stored ${s.stored}/${s.capacity}${s.intakeFlow?.full?' · Full':''}${intake.blocked?' · Retraction blocked':''}`:'Intake —';
+    const inventory = `Hopper/indexer ${s.intakeFlow?.stored ?? s.stored} · Intake transit ${s.intakeFlow?.waiting ?? 0}`;
+    q('.sim-intake-readout').textContent=intake?`Intake ${intake.currentDegrees.toFixed(1)}° → ${intake.targetDegrees.toFixed(1)}° · Estimated limit ${intake.maximumDegrees}° · ${inventory}${intake.blocked?' · Retraction blocked':''}`:'Intake —';
     const hood = s.shooter;
     q('.sim-hood-readout').textContent = hood ? `Hood ${hood.currentDegrees.toFixed(1)}° · Target ${hood.targetDegrees.toFixed(1)}° · Goal ${hood.distance.toFixed(2)} m · ${hood.manual ? 'Manual' : 'Auto'}` : 'Hood — · Target — · Goal —';
     q('.sim-n').textContent = s.loading ? '…' : String(s.scored);

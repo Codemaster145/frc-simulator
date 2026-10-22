@@ -328,8 +328,8 @@ describe('shooting on the move', () => {
     for (const v of [0, 0.6]) {
       const w = await driverWorld(-6.3, -2.4, Math.PI / 2);
       const r = w.robot;
-      const spare = Array.from({ length: w.fuel.n }, (_, i) => i).filter((i) => w.fuel.st[i] === BS.FREE && w.fuel.pos[i * 3] > -1 && w.fuel.pos[i * 3] < 1).slice(0, 16);
-      r.preload(spare);
+      // driverWorld already carries the original eight preloads. Adding more
+      // than the physical hopper can hold distorts this moving-shot benchmark.
       run(w, 0.8, input({ shoot: true }));   // spin up, settle
       const before = w.hubs.scoredBy[0], shots0 = r.shotsFired;
       // drive across the zone (z from −2.4 toward +2.4) at v × 4.7 m/s while holding Shoot
